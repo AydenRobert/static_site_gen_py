@@ -1,9 +1,10 @@
 from extracter import extract_title
 from mdtohtml import markdown_to_html_node
 import os
+import re
 
 
-def generate_page(from_path, template_path, dest_path):
+def generate_page(from_path, template_path, dest_path, base_dir=""):
     print(
         f"Generating page from {from_path} to {dest_path} using {template_path}")
     markdown = open(from_path).read()
@@ -12,12 +13,13 @@ def generate_page(from_path, template_path, dest_path):
     htmlnode = markdown_to_html_node(markdown)
     template = template.replace("{{ Title }}", title).replace(
         "{{ Content }}", htmlnode.to_html())
+    template = re.sub(r'(href|src)="/', fr'\1="{base_dir}/', template)
     os.makedirs(os.path.dirname(dest_path), exist_ok=True)
     with open(dest_path, "a") as dest:
         dest.write(template)
 
 
-def generate_pages_recursively(dir_path_content, template_path, dest_dir_path):
+def generate_pages_recursively(dir_path_content, template_path, dest_dir_path, base_dir):
     mds = list()
     for dirpath, _, filenames in os.walk(dir_path_content):
         paths = list(map(lambda y: f"{dirpath}/{y}",
@@ -29,4 +31,4 @@ def generate_pages_recursively(dir_path_content, template_path, dest_dir_path):
         mdpath = md
         htmlpath = md.replace(f"{dir_path_content}/",
                               f"{dest_dir_path}/").replace(".md", ".html")
-        generate_page(mdpath, template_path, htmlpath)
+        generate_page(mdpath, template_path, htmlpath, base_dir)

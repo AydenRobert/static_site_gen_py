@@ -1,6 +1,7 @@
 from generator import generate_pages_recursively
 import os
 import shutil
+import sys
 
 
 def setup_dirs():
@@ -13,7 +14,16 @@ def setup_dirs():
 
 def main():
     setup_dirs()
-    generate_pages_recursively("content", "template.html", "public")
+    base_dir = ""
+    if len(sys.argv) == 2:
+        base_dir = sys.argv[1]
+
+    content_dir = base_dir + "content"
+    template_file = base_dir + "template.html"
+    public_dir = base_dir + "public"
+    generate_pages_recursively(
+        content_dir, template_file, public_dir, base_dir)
+
 
 if __name__ == "__main__":
     main()
