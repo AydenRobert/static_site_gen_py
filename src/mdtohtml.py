@@ -3,32 +3,59 @@ import re
 
 from converter import text_node_to_html_node, text_to_textnode, markdown_to_blocks
 from block import BlockType
-from htmlnode import LeafNode, PNode, ParentNode
+from htmlnode import LeafNode, PNode, ParentNode, NoneNode
 from block import block_to_blocktype
+
+
+def create_list_item(text):
+    nodes = text_to_textnode(text)
+    return list(map(lambda x: text_node_to_html_node(x), nodes))
 
 
 def create_html_list(block, list_type):
     parent_node = None
     if list_type == BlockType.UNORDERED_LIST:
-        textnodes = list(map(lambda x: LeafNode(
-            "li", x.strip()), block[1:].split("\n-")))
-        parent_node = ParentNode("ul", list(
-            map(lambda x: x, textnodes)))
+        textnode_ll = list(map(lambda x: text_to_textnode(
+            x.strip()), block[1:].split("\n-")))
+        li_list = list()
+        for textnode_l in textnode_ll:
+            li_list.append(
+                ParentNode("li", handle_other_nodes(textnode_l)))
+        parent_node = ParentNode("ul", li_list)
     if list_type == BlockType.ORDERED_LIST:
         matches = (re.match(r"^\d+\.\s+(.*?)(?:\s\.\.\..*)?$", line)
                    for line in block.splitlines())
         text_list = [match.group(1) for match in matches if match]
-        textnodes = list(map(lambda x: LeafNode("li", x), text_list))
-        parent_node = ParentNode("ol", list(
-            map(lambda x: x, textnodes)))
+        textnode_ll = list(map(lambda x: text_to_textnode(x), text_list))
+        li_list = list()
+        for textnode_l in textnode_ll:
+            li_list.append(
+                ParentNode("li", handle_other_nodes(textnode_l)))
+        parent_node = ParentNode("ol", li_list)
     return parent_node
+
+
+def handle_other_nodes(textnodes):
+    out_list = list()
+    for node in textnodes:
+        htmlnode = text_node_to_html_node(node, 1)
+        if htmlnode.tag != None:
+            if len(out_list) == 0 or not isinstance(out_list[-1], NoneNode):
+                out_list.append(NoneNode(""))
+            out_list[-1].append(htmlnode)
+            out_list[-1].value += "{}"
+        elif len(out_list) > 0 and isinstance(out_list[-1], NoneNode) and isinstance(htmlnode, NoneNode):
+            out_list[-1].value += htmlnode.value
+        else:
+            out_list.append(htmlnode)
+    return out_list
 
 
 def handle_paragraph_nodes(textnodes):
     out_list = list()
     for node in textnodes:
         htmlnode = text_node_to_html_node(node)
-        if htmlnode.tag == "b" or htmlnode.tag == "i" or htmlnode.tag == "code":
+        if htmlnode.tag != "p":
             if len(out_list) == 0 or not isinstance(out_list[-1], PNode):
                 out_list.append(PNode(""))
             out_list[-1].append(htmlnode)

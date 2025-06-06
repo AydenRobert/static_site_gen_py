@@ -1,12 +1,12 @@
 from textnode import TextNode, TextType
-from htmlnode import LeafNode, PNode
+from htmlnode import LeafNode, PNode, NoneNode
 from splitnodes import *
 
 
-def text_node_to_html_node(text_node):
+def text_node_to_html_node(text_node, node_type=0):
     match text_node.text_type:
         case TextType.NORMAL_TEXT:
-            return PNode(text_node.text)
+            return PNode(text_node.text) if node_type == 0 else NoneNode(text_node.text)
         case TextType.BOLD_TEXT:
             return LeafNode("b", text_node.text)
         case TextType.ITALIC_TEXT:

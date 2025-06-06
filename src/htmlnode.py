@@ -71,3 +71,23 @@ class PNode(HTMLNode):
 
     def append(self, node):
         self.children.append(node)
+
+
+class NoneNode(HTMLNode):
+    def __init__(self, value, children=None):
+        children = list()
+        super().__init__(None, value, children, None)
+
+    def to_html(self):
+        value_str = ""
+        replacements = iter(self.children)
+        if self.value is not None:
+            value_str = re.sub(
+                r"\{\}",                     # match literal "{}"
+                lambda match: next(replacements).to_html(),
+                self.value
+            )
+        return f'{value_str}'
+
+    def append(self, node):
+        self.children.append(node)
